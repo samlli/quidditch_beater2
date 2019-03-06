@@ -1,6 +1,6 @@
 #include <Servo.h>
 
-#define tx_code 'b'
+#define robot_code 'b'
 #define Rx 17
 #define Tx 16
 #define button 5
@@ -23,6 +23,7 @@ void setup() {
 
   ServoRight.attach(12);
   ServoLeft.attach(11);
+  
   delay(500);
 }
 
@@ -38,19 +39,43 @@ void loop() {
   if(qti1<100 and qti2<100 and qti3<100){ //black black black
     stopMoving(); //do whatever
     delay(1000);
-    forwards();//get off the line
+    forwards(); //move past line
     delay(200);
   }
 
-  if(qti1>100 and qti2>100 and qti3<100){ //white white black
-    turnLeft();
+  if(qti1>100 and qti2>100 and qti3>100){ //white white white
+    forwards();
   }
 
-  if(qti1<100 and qti2>100 and qti3>100){ //black white white
+  if(qti1>100 and qti2>100 and qti3<100){ //white white black
     turnRight();
   }
 
+  if(qti1<100 and qti2>100 and qti3>100){ //black white white
+    turnLeft();
+  }
+
   Serial.println(toString(qti1)+" "+toString(qti2)+" "+toString(qti3));
+
+  char buf[32]  //memory for string formatting
+  
+  if(digitalRead(button)){  //button pressed
+    Serial2.print(robot_code); //send code
+
+    sprintf(buf, "sent signal %c", tx_code);  //string formatting
+    Serial.println(buf);  //print to screen
+
+    blinkLED(tx_LED);
+  }
+
+  if(Serial2.available()){  //signal received
+    if(Serial2.read!=robot_code){
+      sprintf(buf, "received signal %c", Serial2.read);
+      Serial.prinln(buf);
+
+      blinkLED(rx_LED);
+    }
+  }
 }
 
 long RCTime(int sensor){  //reads value from QTI sensor
@@ -91,10 +116,16 @@ void forwards(){
   delay(100);
 }
 
+void blinkLED(pin){
+  digitalWrite(pin, HIGH);
+  delay(1500);
+  digitalWrite(pin, LOW);
+}
+
 String toString(int qti_val){
   if(qti_val>100){
-    return "B";
+    return "W";
   }
-  return "W"
+  return "B"
 }
 
