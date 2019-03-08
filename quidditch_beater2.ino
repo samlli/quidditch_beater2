@@ -4,78 +4,92 @@
 #define Rx 17
 #define Tx 16
 #define button 5
-#define tx_led 2
-#define rx_led 3
-#define line_sensor1 14
-#define line_sensor2 15
-#define line_sensor3 19
+#define tx_LED 2
+#define rx_LED 3
+#define line_sensor3 14
+#define line_sensor1 15
+#define line_sensor2 19
 
 Servo servoRight;
 Servo servoLeft;
 
 void setup() {
   pinMode(button, INPUT);
-  pinMode(tx_led, OUTPUT);
-  pinMode(rx_led, OUTPUT);
+  pinMode(tx_LED, OUTPUT);
+  pinMode(rx_LED, OUTPUT);
 
   Serial.begin(9600);
   Serial2.begin(9600);
 
-  ServoRight.attach(12);
-  ServoLeft.attach(11);
+  servoRight.attach(12);
+  servoLeft.attach(11);
   
   delay(500);
 }
 
 void loop() {
-  int qti1 = RCTime(line_sensor1);
-  int qti2 = RCTime(line_sensor2);
-  int qti3 = RCTime(line_sensor3);
+  int qti1 = RCTime(line_sensor1);  //left
+  int qti2 = RCTime(line_sensor2);  //middle
+  int qti3 = RCTime(line_sensor3);  //right
 
-  if(qti1>100 and qti2<100 and qti3>100){ //white black white
+  if(qti1<150 and qti2>150 and qti3<150){ //white black white
     forwards();
   }
 
-  if(qti1<100 and qti2<100 and qti3<100){ //black black black
+  if(qti1>150 and qti2>150 and qti3>150){ //black black black
     stopMoving(); //do whatever
-    delay(1000);
+    delay(1500);
     forwards(); //move past line
     delay(200);
   }
 
-  if(qti1>100 and qti2>100 and qti3>100){ //white white white
+  if(qti1<150 and qti2<150 and qti3<150){ //white white white
     forwards();
   }
 
-  if(qti1>100 and qti2>100 and qti3<100){ //white white black
+  if(qti1<150 and qti2<150 and qti3>150){ //white white black
     turnRight();
+    Serial.println("turn right");
   }
 
-  if(qti1<100 and qti2>100 and qti3>100){ //black white white
+  if(qti1>150 and qti2<150 and qti3<150){ //black white white
     turnLeft();
+    Serial.println("turn left");
+  }
+  
+  if(qti1<150 and qti2>150 and qti3>150){ //white black black
+    turnRight();
+    Serial.println("turn right");
+  }
+
+  if(qti1>150 and qti2>150 and qti3<150){ //black black white
+    turnLeft();
+    Serial.println("turn left");
   }
 
   Serial.println(toString(qti1)+" "+toString(qti2)+" "+toString(qti3));
 
-  char buf[32]  //memory for string formatting
-  
-  if(digitalRead(button)){  //button pressed
-    Serial2.print(robot_code); //send code
-
-    sprintf(buf, "sent signal %c", tx_code);  //string formatting
-    Serial.println(buf);  //print to screen
-
-    blinkLED(tx_LED);
-  }
-
-  if(Serial2.available()){  //signal received
-    if(Serial2.read!=robot_code){
-      sprintf(buf, "received signal %c", Serial2.read);
-      Serial.prinln(buf);
-
-      blinkLED(rx_LED);
-    }
-  }
+//  char buf[32];  //memory for string formatting
+//  
+//  if(digitalRead(button)){  //button pressed
+//    char outgoing = robot_code;
+//    Serial2.print(outgoing); //send code
+//
+//    sprintf(buf, "sent signal %c", robot_code);  //string formatting
+//    Serial.println(buf);  //print to screen
+//
+//    blinkLED(tx_LED);
+//  }
+//
+//  if(Serial2.available()){  //signal received
+//    char incoming = Serial2.read();
+//    if(incoming!=robot_code){
+//      sprintf(buf, "received signal %c", incoming);
+//      Serial.println(buf);
+//
+//      blinkLED(rx_LED);
+//    }
+//  }
 }
 
 long RCTime(int sensor){  //reads value from QTI sensor
@@ -93,39 +107,35 @@ long RCTime(int sensor){  //reads value from QTI sensor
 }
 
 void turnLeft(){
-  servoLeft.writeMicroseconds(1650);
+  servoLeft.writeMicroseconds(1300);//
   servoRight.writeMicroseconds(1300);
-  delay(100);
 }
 
 void turnRight(){
   servoLeft.writeMicroseconds(1700);
-  servoRight.writeMicroseconds(1350);
-  delay(100);  
+  servoRight.writeMicroseconds(1700);//
 }
 
 void stopMoving(){
   servoLeft.writeMicroseconds(1500);
   servoRight.writeMicroseconds(1500);
-  delay(100);
 }
 
 void forwards(){
   servoLeft.writeMicroseconds(1700);
   servoRight.writeMicroseconds(1300);
-  delay(100);
 }
 
-void blinkLED(pin){
+void blinkLED(int pin){
   digitalWrite(pin, HIGH);
   delay(1500);
   digitalWrite(pin, LOW);
 }
 
 String toString(int qti_val){
-  if(qti_val>100){
-    return "W";
+  if(qti_val>150){
+    return "B";
   }
-  return "B"
+  return "W";
 }
 
